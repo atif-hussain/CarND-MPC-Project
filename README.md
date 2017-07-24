@@ -2,7 +2,22 @@
 Self-Driving Car Engineer Nanodegree Program
 
 ---
+## Model 
+MPC-Model was used, creating a Non-linear-optimization problem 
+ Variables set in vars[]: N X-values| N Y-values| N Psi-values| N V-values| N CT-Err-values| N Epsi-Err-values| N-1 deltas | N-1 accel, 
+  i.e. 6 states for N-timestamps and 2 actuators for N-1 transitions
+ Model estimate at State(t+1):
+      // x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
+      // y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
+      // psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
+      // v_[t+1] = v[t] + a[t] * dt
+      // cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
+      // epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
+      where f() is 3rd order fitted polynomial that tracks waypoints. 
 
+ Model variable' bounds were created, 
+ Model constraints: For each state param, constraint eqn(t+1): actual(t+1)-estimate(t+1)=0. Actuators are free to minimize Cost. 
+ 
 ## Model building
 * The example model from the class Quiz was used as starting point, to create mpc.cpp and update sections of main.cpp
 * Model was updated to use 3rd order reference trajectory. 
@@ -14,13 +29,15 @@ Self-Driving Car Engineer Nanodegree Program
 # Model tweaking 
 * To start with, model was ran with v_ref = 5mps ~ 15mph, and lag=0, to confirm the model works in simplest case. 
 * After some iterations of tweaking, to ease further tweaking, all cost wts and other params were read in by the program, which saved multiple rounds of compiling. 
-* as lag was 100ms=.1s, dt was also taken to be same. Lower dt causes lag over multiple rounds, higher dt adds to lag time. 
-* N was tweaked to 12, a little higher number than 10, to get stable results for green planned path. 
-* given ref_vel of 40mph was used.
+* as lag was 100ms=.1s, dt was also taken to be same. dt higher than lag adds to lag time, adding to prediction inaccuracy. Lower values of dt give finer resolution, but requires more computations per sec. So dt not more than .1 but not too less than this was used. To work well in my personal system, i used dt on the higher side of .1s to keep computation low. 
+* Nxdt gives prediction time-horizon. With high values, it was noticed that the green line comes to join the yellow line, then starts to diverge. Predicted CTE is reducing then increasing. Larger values of N add to computational time, and larger Nxdt jumps into area of diverging green & yellow, which isn't beneficial. Also too low Nxdt would not join these lines and also make the motion jerky. 
+* To keep Nxdt little over 1s, N was tweaked to 12, and results became stable for green planned path. 
+* Took given ref_vel of 40mph. 
 * Cost function was started with high values of wte[cte] and wts[epsi], and very low to zero weights to others. With some tweaking, wte[cte] & wte[epsi] were found to be very high values of 3000 & 1000 for other tasks weighed 1.  
 * To prevent zigzagging, weight was added to cost for differential of steering angle delta. 
 * To prevent stagging, weight of v was also added to costs. 
 * The other weights were left to lowest values. 
+* Initially Steering seems too sensitive, tried reducing bounds. However at certain turns at 40mph, it needed more. So reverted to 25'.
 * After trying and narrowing down to best weights combination, code for reading in values was commented out. 
 
 # Model Result
