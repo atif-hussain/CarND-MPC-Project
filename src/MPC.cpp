@@ -6,8 +6,8 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 15; // 20;
-double dt = 0.1; // .050; //50ms, ie. 20Hz
+size_t N = 20; // anything more than 6 i.e no. of forward points showing in simulator
+double dt = .05; // ie. 20Hz
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -127,7 +127,14 @@ class FG_eval {
 //
 // MPC class definition implementation.
 //
-MPC::MPC() {}
+Eigen::VectorXd wts(10);
+MPC::MPC() {
+	wts << 40., 12, .1, 3000., 1000., 1., 1., 1., 200., 1.;
+	const char *names[] = {"ref_vel", "N fwd", "dt", "cte", "pse", "v", "delta", "acc", "delta_change", "acc_change"};
+	for (auto i=0;i<10; i++) {
+//		cout << names[i] << ": "; cin >> wts[i];
+	} ref_v = wts[0]; N = wts[1]; dt = wts[2];  
+}
 MPC::~MPC() {}
 
 vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
@@ -264,24 +271,24 @@ void setConstraints(const Eigen::VectorXd state, Dvector& constraints_lowerbound
 // TODO: Set cost weights to tune the model for a 'smooth ride'
 AD<double> FG_eval::getCost(const ADvector& vars) {
     AD<double> cost = 0;
-
+	
     // The part of the cost based on the reference state.
     for (size_t t = 0; t < N; t++) {
-      cost += 3000.*CppAD::pow(ip( _cte_,t), 2);
-      cost += 500.*CppAD::pow(ip(_epsi_,t), 2);
-      cost += 1.00*CppAD::pow(ip(_V_,t) - ref_v, 2);
+      cost += wts[3]*CppAD::pow(ip( _cte_,t), 2);
+      cost += wts[4]*CppAD::pow(ip(_epsi_,t), 2);
+      cost += wts[5]*CppAD::pow(ip(_V_,t) - ref_v, 2);
     }
 
     // Minimize the use of actuators.
     for (size_t t = 0; t < N - 1; t++) {
-      cost += 1.0*CppAD::pow(ip(_delta_,t), 2);
-      cost += 1.0*CppAD::pow(ip( _acc_ ,t), 2);
+      cost += wts[6]*CppAD::pow(ip(_delta_,t), 2);
+      cost += wts[7]*CppAD::pow(ip( _acc_ ,t), 2);
     }
 
     // Minimize the value gap between sequential actuations.
     for (size_t t = 1; t < N - 1; t++) {
-      cost += 200*CppAD::pow(ip(_delta_,t) - ip(_delta_,t-1), 2);
-      cost += 1.0*CppAD::pow(ip( _acc_ ,t) - ip( _acc_ ,t-1), 2);
+      cost += wts[8]*CppAD::pow(ip(_delta_,t) - ip(_delta_,t-1), 2);
+      cost += wts[9]*CppAD::pow(ip( _acc_ ,t) - ip( _acc_ ,t-1), 2);
     }
 	return cost;
 }
