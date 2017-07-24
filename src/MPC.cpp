@@ -23,8 +23,8 @@ const double Lf = 2.67;
 
 // TODO: inserted positions
 // Both the reference cross track and orientation errors are 0.
-// The reference velocity is set to 40 mph ~ 18m/s.
-double ref_v = 18.;
+// The reference velocity is set to 40 mph ~ 18m/s. 
+double ref_v = 40.;
 
 // The solver takes all the state variables and actuator
 // variables in a singular vector. Thus, we should to establish
@@ -95,7 +95,7 @@ class FG_eval {
 	}
 
     // The rest of the constraints
-    // For each state param, set the constraints, as eqn = actual(t) - estimate(t) = 0.
+    // For each state param, set the constraints, as eqn(t+1) = actual(t+1) - estimate(t+1) = 0.
     for (size_t t = 0; t < N-1; t++) {
       // Considers state at time t+1, t, and actuation at time t
 
@@ -129,8 +129,11 @@ class FG_eval {
 //
 Eigen::VectorXd wts(10);
 MPC::MPC() {
-	wts << 40., 12, .1, 3000., 1000., 1., 1., 1., 200., 1.;
+  // Parameters that were tweaked in by reading from stdin, and their final initialized weights (commented reading in)
 	const char *names[] = {"ref_vel", "N fwd", "dt", "cte", "pse", "v", "delta", "acc", "delta_change", "acc_change"};
+	wts                   << 40.,     12,     .1,    5000.,  1000.,  1.,   1.,     1.,      100.,           1.;      
+  // Speed left in mph as that is what is reducing zig-zag driving, based on trial and error. 
+  
 	for (auto i=0;i<10; i++) {
 //		cout << names[i] << ": "; cin >> wts[i];
 	} ref_v = wts[0]; N = wts[1]; dt = wts[2];  
@@ -230,7 +233,7 @@ void setBounds(Dvector& vars_lowerbound, Dvector& vars_upperbound) {
     vars_upperbound[i] = 1.0e19;
   }
 
-  // The upper and lower limits of delta are set to -25 and 25
+  // The upper and lower limits of delta are set to -10 and 10 
   // degrees (values in radians).
   // NOTE: Feel free to change this to something else.
   for (size_t i = n_constraints; i < _acc_; i++) {

@@ -113,8 +113,8 @@ int main() {
           // Transform ptsx, ptsy to car coords
           // TODO: implement in separate function
           for (size_t i = 0; i < ptsx.size(); i++) {
-            double dtx = ptsx[i] - px;
-            double dty = ptsy[i] - py;
+            double dtx = ptsx[i] - px; // (px + v * dt * sin(psi));
+            double dty = ptsy[i] - py; // (py + v * dt * cos(psi));
             ptsx[i] = dtx * cos(psi) + dty * sin(psi);
             ptsy[i] = dty * cos(psi) - dtx * sin(psi);
           }
@@ -132,15 +132,16 @@ int main() {
           
           /* Convert units */
           std::cout << "current cte: " << cte << "m?"  << "epsi: " << rad2deg(epsi) << "^" << endl;
-          //v = v * 1609. / 3600.; // convert from mph to m/s
-          
-          // Car length from front to vehicle CoG/back that has a similar radius.
-          const double Lf = 2.67;
+          // v   *= 1609. / 3600.; // convert from mph to m/s
+          // acc *= 1609. / 3600.; // convert from mph to m/s
           
           // predict the state 100ms into the future before you send it to the solver in order to compensate for the latency.
           // Latency of 100ms, so predict 100ms (0.1s) ahead
           double dt = lag; 
 
+          // Car length from front to vehicle CoG/back that has a similar radius.
+          const double Lf = 2.67;
+          
           
           // Predict (x = y = psi = 0)
           double predicted_x = v * dt;
@@ -171,8 +172,8 @@ int main() {
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
           // Simulator does seems to give and take in radians only. 
-          msgJson["steering_angle"] = steer_value;
-          msgJson["throttle"] = throttle_value;
+          msgJson["steering_angle"] = steer_value / (deg2rad(25) * Lf);
+          msgJson["throttle"] = throttle_value; 
           
           //Display the MPC predicted trajectory 
           vector<double> mpc_x_vals;
