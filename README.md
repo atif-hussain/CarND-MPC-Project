@@ -3,6 +3,31 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 
+## Model building
+* The example model from the class Quiz was used as starting point, to create mpc.cpp and update sections of main.cpp
+* Model was updated to use 3rd order reference trajectory. 
+
+## Model fixing  
+* With some hit & trial, while keeping dummy actuators, issues with formulae signs were fixed. I had 1 in steering angle, which created lot of unstable zigzag while running. 
+* To fix increasing magnitude oscillation of cars from left to right, measurement scales were fixed. To simplify, all computations within MPC.cpp were done in S.I system. Measurement scales were defined in Model.md only for states and not for actuators. Logs were created and investigated, to conclude, though file says, 'divide by deg2rad(25)', it was not needed as simulator took all angles in radians. Similarly, mph to mps conversion was eliminated. 
+
+# Model tweaking 
+* To start with, model was ran with v_ref = 5mps ~ 15mph, and lag=0, to confirm the model works in simplest case. 
+* After some iterations of tweaking, to ease further tweaking, all cost wts and other params were read in by the program, which saved multiple rounds of compiling. 
+* as lag was 100ms=.1s, dt was also taken to be same. Lower dt causes lag over multiple rounds, higher dt adds to lag time. 
+* N was tweaked to 12, a little higher number than 10, to get stable results for green planned path. 
+* given ref_vel of 40mph was used.
+* Cost function was started with high values of wte[cte] and wts[epsi], and very low to zero weights to others. With some tweaking, wte[cte] & wte[epsi] were found to be very high values of 3000 & 1000 for other tasks weighed 1.  
+* To prevent zigzagging, weight was added to cost for differential of steering angle delta. 
+* To prevent stagging, weight of v was also added to costs. 
+* The other weights were left to lowest values. 
+* After trying and narrowing down to best weights combination, code for reading in values was commented out. 
+
+# Model Result
+* The model was finally able to complete a lap including at 25 July. 
+
+---
+
 ## Dependencies
 
 * cmake >= 3.5
